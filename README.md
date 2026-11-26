@@ -1,5 +1,13 @@
 # gridlock
 
+I am building the standalone interactive UI/UX mockup for **Gridlock (MVP v1.1)** using pure Tailwind CSS utility classes and client-side simulated Atlas `$rankFusion`, Voyage Multimodal-3, and OpenUSD `$graphLookup` intelligence.
+
+### Highlights of the Mockup
+
+* **Pure Tailwind CSS (Zero Custom `<style>` Tags):** Uses Tailwind's dark studio palette (`zinc-950`, `zinc-900`, `amber-500`, `cyan-400`) and inline SVG schematics so every shot, shader ball, and USD rig renders crisply without external image links.
+* **Atlas `$rankFusion` & Frame-Accurate Scrubbing:** Switch between `$rankFusion`, `Visual`, and `USD/Lexical` search modes, click prompt chips like `"backlit sandstorm"`, or scrub individual keyframes (`f048`, `f101`, `f184`) in the right inspector drawer.
+* **OpenUSD `$graphLookup` & OCIO LUT Preview:** Toggle between raw linear and `OCIO: sRGB LUT ON`, inspect interactive USD sublayer dependencies (`shd_spice_sand_v04`, `rig_worm_spine_v09`), copy 15-minute presigned R2/S3 URLs, or simulate ingesting a new `.exr` file via **+ Ingest Media**.
+
 ---
 
 # Gridlock — MVP Technical Implementation Spec (v1.1)
