@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gridlock — AI-Native Studio Media & Asset Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
+
+  <!-- Toast Notification Banner (No alert() used) -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur border-b border-zinc-800/90 px-3 sm:px-5 py-2.5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Project Switcher -->
+      <div class="flex items-center gap-3">
+        <!-- Mobile Sidebar Toggle -->
+        <button id="mobile-filter-btn" type="button" class="lg:hidden p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M3 12h12M3 20h6" />
+          </svg>
+        </button>
+
+        <!-- Logo -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+            <svg class="w-4 h-4 text-zinc-950" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16M9 4v16M15 4v16" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold tracking-tight text-sm sm:text-base text-white">GRIDLOCK</span>
+              <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-amber-400">v1.1</span>
+            </div>
+            <p class="hidden sm:block text-[10px] text-zinc-500 leading-none">Atlas + Voyage Multimodal-3</p>
+          </div>
+        </div>
+
+        <span class="hidden md:inline-block h-5 w-px bg-zinc-800"></span>
+
+        <!-- Org / Project Switcher -->
+        <div class="relative">
+          <select id="project-switcher" aria-label="Select Studio Project" class="appearance-none bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 hover:border-zinc-700 text-xs font-mono text-zinc-200 rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/60 transition cursor-pointer">
+            <option value="proj_dune_03">studio_apex / proj_dune_03</option>
+            <option value="proj_cyber_noir">studio_apex / proj_cyber_noir</option>
+          </select>
+          <svg class="w-3.5 h-3.5 text-zinc-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Center Hybrid Search Bar -->
+      <div class="order-3 lg:order-2 w-full lg:flex-1 lg:max-w-2xl">
+        <div class="relative flex items-center bg-zinc-900 border border-zinc-800 focus-within:border-amber-500/70 focus-within:ring-2 focus-within:ring-amber-500/15 rounded-xl px-3 py-1.5 transition">
+          <svg class="w-4 h-4 text-amber-400 shrink-0 mr-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search pixels, prompts, USD codes, or artist notes (e.g., 'backlit sandstorm')..."
+            class="w-full bg-transparent text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none"
+          />
+          <button id="clear-search-btn" type="button" class="hidden text-zinc-500 hover:text-zinc-300 px-1.5 text-xs font-mono">ESC</button>
+          <div class="hidden sm:flex items-center gap-1 ml-2 pl-2 border-l border-zinc-800 shrink-0">
+            <button data-mode="hybrid" class="search-mode-btn px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30 transition">
+              $rankFusion
+            </button>
+            <button data-mode="vector" class="search-mode-btn px-2 py-0.5 rounded-md text-[11px] font-medium text-zinc-400 hover:text-zinc-200 border border-transparent transition">
+              Visual
+            </button>
+            <button data-mode="lexical" class="search-mode-btn px-2 py-0.5 rounded-md text-[11px] font-medium text-zinc-400 hover:text-zinc-200 border border-transparent transition">
+              USD/Lexical
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Status & Actions -->
+      <div class="order-2 lg:order-3 flex items-center gap-2 sm:gap-3">
+        <!-- Change Stream & ShotGrid Live Pill -->
+        <div class="hidden xl:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] text-zinc-300">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span>ShotGrid Synced</span>
+          <span class="text-zinc-600">•</span>
+          <span class="font-mono text-zinc-400">Change Stream</span>
+        </div>
+
+        <!-- Ingest Media CTA -->
+        <button id="open-ingest-btn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs transition shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Ingest Media</span>
+        </button>
+
+        <!-- RBAC User Pill -->
+        <div class="hidden sm:flex items-center gap-2 pl-2 border-l border-zinc-800">
+          <div class="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-[11px] font-mono font-semibold text-cyan-300">
+            AC
+          </div>
+          <div class="leading-tight">
+            <div class="text-xs font-medium text-zinc-200">a.chen</div>
+            <div class="text-[10px] font-mono text-zinc-500">FX Lead • RBAC</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Query Preset Chips -->
+    <div class="flex items-center gap-2 mt-2.5 pt-2 border-t border-zinc-900 overflow-x-auto no-scrollbar">
+      <span class="text-[11px] font-mono text-zinc-500 shrink-0">Voyage Prompts:</span>
+      <div id="preset-chips" class="flex items-center gap-1.5"></div>
+    </div>
+  </header>
+
+  <!-- Main 3-Column Studio Workspace -->
+  <div class="flex min-h-[calc(100vh-104px)] relative">
+
+    <!-- Left Collapsible Filter Rail -->
+    <aside id="filter-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-zinc-950 border-r border-zinc-800/90 p-4 transform -translate-x-full lg:translate-x-0 lg:static lg:block transition-transform duration-200 overflow-y-auto shrink-0">
+      <div class="flex items-center justify-between lg:hidden mb-4 pb-2 border-b border-zinc-800">
+        <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Pipeline Filters</span>
+        <button id="close-filter-btn" type="button" class="p-1.5 rounded-lg bg-zinc-900 text-zinc-400 hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Filter Group: Entity Type -->
+      <div class="mb-5">
+        <h3 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Entity Type</h3>
+        <div id="filter-entity-type" class="space-y-1"></div>
+      </div>
+
+      <!-- Filter Group: Department -->
+      <div class="mb-5">
+        <h3 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Department</h3>
+        <div id="filter-department" class="space-y-1"></div>
+      </div>
+
+      <!-- Filter Group: Approval Status -->
+      <div class="mb-5">
+        <h3 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Tracker Status</h3>
+        <div id="filter-status" class="space-y-1"></div>
+      </div>
+
+      <!-- Filter Group: Color Space -->
+      <div class="mb-6">
+        <h3 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">OCIO Color Space</h3>
+        <div id="filter-colorspace" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <!-- Atlas Telemetry Card -->
+      <div class="rounded-xl bg-zinc-900/80 border border-zinc-800 p-3 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold text-zinc-300">Atlas Cluster Telemetry</span>
+          <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">M30</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="bg-zinc-950 rounded-lg p-2 border border-zinc-800/80">
+            <div class="text-[10px] text-zinc-500">Keyframes</div>
+            <div id="stat-frames" class="font-mono font-semibold text-zinc-100">142,840</div>
+          </div>
+          <div class="bg-zinc-950 rounded-lg p-2 border border-zinc-800/80">
+            <div class="text-[10px] text-zinc-500">Query Latency</div>
+            <div id="stat-latency" class="font-mono font-semibold text-amber-400">18 ms</div>
+          </div>
+        </div>
+        <div class="text-[10px] font-mono text-zinc-500 leading-relaxed">
+          Deduplicated via <span class="text-zinc-300">$group: "$entity_id"</span> • 1024-dim cosine
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Stage: Deduplicated Asset & Keyframe Grid -->
+    <main class="flex-1 min-w-0 p-4 sm:p-5 overflow-y-auto">
+      <!-- Results Subheader -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div class="flex items-center gap-2.5">
+          <h1 id="grid-title" class="text-sm sm:text-base font-semibold text-white">Deduplicated Studio Entities</h1>
+          <span id="result-count-badge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300">8 items</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-zinc-400">
+          <span class="hidden sm:inline">Ranked by:</span>
+          <span id="active-rank-label" class="font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+            Atlas $rankFusion (Vector + BM25)
+          </span>
+          <button id="reset-filters-btn" type="button" class="hidden text-xs text-zinc-400 hover:text-white underline ml-1">
+            Reset filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards Grid -->
+      <div id="asset-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/30 p-12 text-center my-6">
+        <div class="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-3 text-zinc-500">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-zinc-200">No matching frames or USD entities</h3>
+        <p class="text-xs text-zinc-500 mt-1 max-w-md mx-auto">
+          Try clearing active department filters or switching from Lexical USD mode to Hybrid <span class="font-mono text-amber-400">$rankFusion</span> semantic search.
+        </p>
+        <button id="empty-reset-btn" type="button" class="mt-4 px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-white transition">
+          Clear Search & Filters
+        </button>
+      </div>
+    </main>
+
+    <!-- Right Inspector Drawer (Dailies Player, Frame Scrubber & OpenUSD Lineage) -->
+    <aside id="inspector-drawer" class="w-full lg:w-[420px] xl:w-[460px] bg-zinc-950 border-l border-zinc-800/90 flex flex-col shrink-0">
+      <div id="inspector-content" class="p-4 sm:p-5 space-y-4 overflow-y-auto"></div>
+    </aside>
+  </div>
+
+  <!-- Async Ingestion Pipeline Modal -->
+  <div id="ingest-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-lg rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+          <h2 class="text-sm font-semibold text-white">Ingest Studio Media & USD Layer</h2>
+        </div>
+        <button id="close-ingest-btn" type="button" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="ingest-form" class="p-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono text-zinc-400 mb-1">Entity Code</label>
+            <input id="ingest-code" type="text" required value="fx_spice_vortex_v004" class="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono text-zinc-400 mb-1">Department</label>
+            <select id="ingest-dept" class="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+              <option value="fx">FX (Houdini / Pyro)</option>
+              <option value="lighting">Lighting (Solaris)</option>
+              <option value="lookdev">Lookdev (MaterialX)</option>
+              <option value="rig">Rigging (OpenUSD)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-mono text-zinc-400 mb-1">Source File (.exr / .mov / .usd)</label>
+            <input id="ingest-file" type="text" required value="dune03/fx/fx_spice_vortex_v004.exr" class="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs font-mono text-zinc-300 focus:outline-none focus:border-amber-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-mono text-zinc-400 mb-1">Input Color Space</label>
+            <select id="ingest-colorspace" class="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500">
+              <option value="ACEScg">ACEScg (Linear EXR)</option>
+              <option value="Rec.709">Rec.709 (Dailies MOV)</option>
+              <option value="sRGB">sRGB (Concept / Texture)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-mono text-zinc-400 mb-1">Artist Dailies Notes (Embedded with Keyframes)</label>
+          <textarea id="ingest-notes" rows="2" required class="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-amber-500">Swirling golden spice vortex with volumetric rim scattering and debris wake.</textarea>
+        </div>
+
+        <!-- Simulated Worker Pipeline Steps -->
+        <div id="ingest-pipeline-box" class="hidden rounded-xl bg-zinc-950 border border-zinc-800 p-3.5 space-y-2 text-xs font-mono">
+          <div id="step-1" class="flex items-center justify-between text-zinc-400">
+            <span>1. oiiotool OCIO ACEScg → Output - sRGB</span>
+            <span class="status-tag text-amber-400">Running...</span>
+          </div>
+          <div id="step-2" class="flex items-center justify-between text-zinc-500">
+            <span>2. FFmpeg scene-cut keyframes + usdcat parse</span>
+            <span class="status-tag">Queued</span>
+          </div>
+          <div id="step-3" class="flex items-center justify-between text-zinc-500">
+            <span>3. Voyage multimodal-3 (1024-dim) + Atlas Upsert</span>
+            <span class="status-tag">Queued</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button id="cancel-ingest-btn" type="button" class="px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200">
+            Cancel
+          </button>
+          <button id="submit-ingest-btn" type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-xs font-semibold text-zinc-950 transition">
+            Dispatch Async Worker
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. MOCK STUDIO DATASET (MongoDB Atlas `entities` + `keyframes` + lineage)
+    // =========================================================================
+    const STUDIO_ENTITIES = [
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d0",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "version",
+        code: "chr_sandworm_v014",
+        status: "approved",
+        department: "fx",
+        visual_theme: "from-amber-950 via-orange-900/70 to-zinc-950",
+        accent_hex: "amber",
+        artwork_type: "sandworm",
+        media: {
+          source_key: "dune03/fx/chr_sandworm_v014.mov",
+          proxy_stream_key: "proxies/dune03/v014.mp4",
+          duration_sec: 12.5,
+          fps: 24,
+          resolution: "4096x2160",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "asset_sandworm_hero",
+          usd_dependency_codes: ["shd_spice_sand_v04", "rig_worm_spine_v09"]
+        },
+        context: {
+          artist: "a.chen",
+          notes: "Increased trailing dust density and backlit rim highlights per sup notes.",
+          generative_metadata: {
+            model: "comfyui-flux-dev",
+            seed: 88492011,
+            prompt: "massive desert worm erupting through backlit sandstorm"
+          }
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "Version_99412",
+          last_sync_id: "evt_sg_88210a",
+          last_synced_at: "2026-11-26T00:05:00Z"
+        },
+        scores: { rrf: 0.984, vector: 0.962, lexical: 14.8 },
+        keyframes: [
+          { frame_num: 48, timestamp_sec: 2.0, score: 0.89, reason: "Initial dune breach silhouette & dust plume" },
+          { frame_num: 101, timestamp_sec: 4.2, score: 0.984, reason: "Peak backlit rim light on sandworm rings + dense sandstorm" },
+          { frame_num: 184, timestamp_sec: 7.6, score: 0.92, reason: "Secondary particulate wake & camera shake" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d2",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "version",
+        code: "env_arrakis_storm_v008",
+        status: "review",
+        department: "lighting",
+        visual_theme: "from-orange-950 via-amber-800/50 to-stone-950",
+        accent_hex: "orange",
+        artwork_type: "storm",
+        media: {
+          source_key: "dune03/lgt/env_arrakis_storm_v008.exr",
+          proxy_stream_key: "proxies/dune03/env_storm_v008.mp4",
+          duration_sec: 8.0,
+          fps: 24,
+          resolution: "4096x1716",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "seq_040_haboob",
+          usd_dependency_codes: ["shd_spice_sand_v04", "lit_sietch_interior_v003"]
+        },
+        context: {
+          artist: "m.vance",
+          notes: "Volumetric haboob wall with golden hour sun disk scattering in ACEScg.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "Version_99488",
+          last_sync_id: "evt_sg_88244b",
+          last_synced_at: "2026-11-26T00:02:14Z"
+        },
+        scores: { rrf: 0.951, vector: 0.948, lexical: 12.1 },
+        keyframes: [
+          { frame_num: 24, timestamp_sec: 1.0, score: 0.91, reason: "Wide horizon dust wall approach" },
+          { frame_num: 96, timestamp_sec: 4.0, score: 0.951, reason: "Golden backlit atmospheric scattering across dunes" },
+          { frame_num: 168, timestamp_sec: 7.0, score: 0.87, reason: "Full whiteout particulate occlusion" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d3",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "asset",
+        code: "rig_worm_spine_v09",
+        status: "approved",
+        department: "rig",
+        visual_theme: "from-cyan-950 via-slate-900 to-zinc-950",
+        accent_hex: "cyan",
+        artwork_type: "wireframe",
+        media: {
+          source_key: "dune03/rig/rig_worm_spine_v09.usd",
+          proxy_stream_key: "proxies/dune03/rig_worm_turntable.mp4",
+          duration_sec: 5.0,
+          fps: 24,
+          resolution: "2048x2048",
+          color_space: "Rec.709"
+        },
+        lineage: {
+          parent_code: "asset_sandworm_hero",
+          usd_dependency_codes: ["skel_worm_base_v03"]
+        },
+        context: {
+          artist: "k.sato",
+          notes: "120-joint procedural spline IK rig with automatic dermal ring compression.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "PublishedFile_44102",
+          last_sync_id: "evt_sg_88109c",
+          last_synced_at: "2026-11-25T22:18:00Z"
+        },
+        scores: { rrf: 0.912, vector: 0.841, lexical: 18.4 },
+        keyframes: [
+          { frame_num: 12, timestamp_sec: 0.5, score: 0.912, reason: "USD skeleton joint hierarchy & spline deformer viewport" },
+          { frame_num: 72, timestamp_sec: 3.0, score: 0.86, reason: "Max curvature stress test on dermal segments" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d4",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "usd_layer",
+        code: "shd_spice_sand_v04",
+        status: "approved",
+        department: "lookdev",
+        visual_theme: "from-yellow-950 via-amber-900/40 to-zinc-950",
+        accent_hex: "amber",
+        artwork_type: "shader",
+        media: {
+          source_key: "dune03/lookdev/shd_spice_sand_v04.mtlx",
+          proxy_stream_key: "proxies/dune03/shd_spice_sphere.mp4",
+          duration_sec: 4.0,
+          fps: 24,
+          resolution: "2048x2048",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "matlib_arrakis_master",
+          usd_dependency_codes: ["tex_cinnamon_albedo_8k", "tex_micro_grain_norm"]
+        },
+        context: {
+          artist: "e.rostova",
+          notes: "MaterialX dual-lobe specular glint shader for high-concentration spice veins.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "PublishedFile_44190",
+          last_sync_id: "evt_sg_88155d",
+          last_synced_at: "2026-11-25T23:10:00Z"
+        },
+        scores: { rrf: 0.896, vector: 0.875, lexical: 15.2 },
+        keyframes: [
+          { frame_num: 36, timestamp_sec: 1.5, score: 0.896, reason: "Lookdev shader ball under grazing warm key light" },
+          { frame_num: 84, timestamp_sec: 3.5, score: 0.85, reason: "Micro-glint specular response in shadow transition" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d5",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "version",
+        code: "fx_thumper_shockwave_v011",
+        status: "wip",
+        department: "fx",
+        visual_theme: "from-stone-900 via-amber-950/60 to-zinc-950",
+        accent_hex: "amber",
+        artwork_type: "shockwave",
+        media: {
+          source_key: "dune03/fx/fx_thumper_shockwave_v011.exr",
+          proxy_stream_key: "proxies/dune03/thumper_v011.mp4",
+          duration_sec: 6.0,
+          fps: 24,
+          resolution: "4096x2160",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "prop_fremen_thumper",
+          usd_dependency_codes: ["shd_spice_sand_v04"]
+        },
+        context: {
+          artist: "a.chen",
+          notes: "RBD granular sand liquefaction ripples triggered on thumper piston impact.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "Version_99501",
+          last_sync_id: "evt_sg_88299e",
+          last_synced_at: "2026-11-26T00:01:05Z"
+        },
+        scores: { rrf: 0.884, vector: 0.901, lexical: 10.4 },
+        keyframes: [
+          { frame_num: 30, timestamp_sec: 1.25, score: 0.884, reason: "Concentric sand ripple displacement ring on piston strike" },
+          { frame_num: 110, timestamp_sec: 4.58, score: 0.83, reason: "Fine dust dispersion settling phase" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d6",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "shot",
+        code: "lit_sietch_interior_v003",
+        status: "approved",
+        department: "lighting",
+        visual_theme: "from-slate-900 via-cyan-950/50 to-zinc-950",
+        accent_hex: "cyan",
+        artwork_type: "interior",
+        media: {
+          source_key: "dune03/lgt/lit_sietch_interior_v003.exr",
+          proxy_stream_key: "proxies/dune03/sietch_v003.mp4",
+          duration_sec: 9.5,
+          fps: 24,
+          resolution: "4096x1716",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "seq_012_sietch",
+          usd_dependency_codes: ["env_rock_carving_v02"]
+        },
+        context: {
+          artist: "m.vance",
+          notes: "Cool blue zenithal rock shaft light contrasted against warm oil lamps.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "Version_99380",
+          last_sync_id: "evt_sg_88012f",
+          last_synced_at: "2026-11-25T19:40:00Z"
+        },
+        scores: { rrf: 0.861, vector: 0.882, lexical: 9.8 },
+        keyframes: [
+          { frame_num: 64, timestamp_sec: 2.66, score: 0.861, reason: "Volumetric god-rays piercing cavern ceiling" },
+          { frame_num: 190, timestamp_sec: 7.91, score: 0.81, reason: "Warm rim fill on water cistern alcove" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9d7",
+        org_id: "studio_apex",
+        project_id: "proj_dune_03",
+        entity_type: "version",
+        code: "art_harkonnen_concept_v002",
+        status: "review",
+        department: "lookdev",
+        visual_theme: "from-zinc-900 via-neutral-800/70 to-black",
+        accent_hex: "zinc",
+        artwork_type: "concept",
+        media: {
+          source_key: "dune03/art/art_harkonnen_concept_v002.png",
+          proxy_stream_key: "proxies/dune03/harkonnen_v002.webp",
+          duration_sec: 1.0,
+          fps: 24,
+          resolution: "3840x2160",
+          color_space: "sRGB"
+        },
+        lineage: {
+          parent_code: "asset_harvester_heavy",
+          usd_dependency_codes: []
+        },
+        context: {
+          artist: "d.kowalski",
+          notes: "Monochromatic brutalist spice harvester silhouette under infrared eclipse.",
+          generative_metadata: {
+            model: "comfyui-flux-dev",
+            seed: 44109233,
+            prompt: "monochrome brutalist mega harvester silhouette, black sun eclipse, high contrast"
+          }
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "Version_99477",
+          last_sync_id: "evt_sg_88221g",
+          last_synced_at: "2026-11-25T23:55:00Z"
+        },
+        scores: { rrf: 0.849, vector: 0.869, lexical: 11.0 },
+        keyframes: [
+          { frame_num: 1, timestamp_sec: 0.04, score: 0.849, reason: "High-contrast monochrome eclipse silhouette & industrial hull" }
+        ]
+      },
+      // Second Project (`proj_cyber_noir`) entries
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9e1",
+        org_id: "studio_apex",
+        project_id: "proj_cyber_noir",
+        entity_type: "version",
+        code: "fx_neon_rain_alley_v019",
+        status: "approved",
+        department: "fx",
+        visual_theme: "from-fuchsia-950 via-cyan-950/80 to-zinc-950",
+        accent_hex: "cyan",
+        artwork_type: "storm",
+        media: {
+          source_key: "cybernoir/fx/fx_neon_rain_alley_v019.exr",
+          proxy_stream_key: "proxies/cybernoir/rain_v019.mp4",
+          duration_sec: 10.0,
+          fps: 24,
+          resolution: "4096x2160",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "seq_08_chinatown",
+          usd_dependency_codes: ["shd_wet_asphalt_v07"]
+        },
+        context: {
+          artist: "a.chen",
+          notes: "Heavy rain splash mist with magenta/cyan holographic sign refraction.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "Version_10214",
+          last_sync_id: "evt_sg_99102a",
+          last_synced_at: "2026-11-26T00:04:10Z"
+        },
+        scores: { rrf: 0.967, vector: 0.955, lexical: 16.0 },
+        keyframes: [
+          { frame_num: 72, timestamp_sec: 3.0, score: 0.967, reason: "Anamorphic cyan/magenta neon reflections on wet pavement" },
+          { frame_num: 180, timestamp_sec: 7.5, score: 0.91, reason: "Spinner hovercraft downwash mist dispersion" }
+        ]
+      },
+      {
+        _id: "6745a1b2c3d4e5f6a7b8c9e2",
+        org_id: "studio_apex",
+        project_id: "proj_cyber_noir",
+        entity_type: "usd_layer",
+        code: "shd_wet_asphalt_v07",
+        status: "approved",
+        department: "lookdev",
+        visual_theme: "from-indigo-950 via-slate-900 to-zinc-950",
+        accent_hex: "cyan",
+        artwork_type: "shader",
+        media: {
+          source_key: "cybernoir/lookdev/shd_wet_asphalt_v07.mtlx",
+          proxy_stream_key: "proxies/cybernoir/asphalt_v07.mp4",
+          duration_sec: 4.0,
+          fps: 24,
+          resolution: "2048x2048",
+          color_space: "ACEScg"
+        },
+        lineage: {
+          parent_code: "matlib_street_master",
+          usd_dependency_codes: []
+        },
+        context: {
+          artist: "e.rostova",
+          notes: "Procedural puddle mask with thin-film oil slick interference.",
+          generative_metadata: null
+        },
+        external_sync: {
+          tracker: "shotgrid",
+          external_id: "PublishedFile_51209",
+          last_sync_id: "evt_sg_99044b",
+          last_synced_at: "2026-11-25T21:15:00Z"
+        },
+        scores: { rrf: 0.903, vector: 0.889, lexical: 14.1 },
+        keyframes: [
+          { frame_num: 48, timestamp_sec: 2.0, score: 0.903, reason: "Thin-film iridescent puddle reflection test" }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 2. APPLICATION STATE
+    // =========================================================================
+    const state = {
+      project: "proj_dune_03",
+      searchQuery: "",
+      searchMode: "hybrid", // hybrid | vector | lexical
+      entityType: "all",
+      department: "all",
+      status: "all",
+      colorSpace: "all",
+      selectedId: "6745a1b2c3d4e5f6a7b8c9d0",
+      selectedFrameIndex: 1, // Defaults to f101 on chr_sandworm_v014
+      activeTab: "metadata", // metadata | lineage | payload
+      ocioLutEnabled: true
+    };
+
+    const PRESET_QUERIES = [
+      { label: "backlit sandstorm", query: "backlit sandstorm", project: "proj_dune_03" },
+      { label: "ACEScg dust & rim", query: "dust rim ACEScg", project: "proj_dune_03" },
+      { label: "shd_spice_sand_v04", query: "shd_spice_sand_v04", project: "proj_dune_03" },
+      { label: "sandworm rig", query: "rig spline", project: "proj_dune_03" },
+      { label: "neon rain reflection", query: "neon rain", project: "proj_cyber_noir" }
+    ];
+
+    // =========================================================================
+    // 3. SVG VISUAL GENERATOR (Zero Broken External Images)
+    // =========================================================================
+    function renderSimulatedViewportSVG(item, isLarge = false) {
+      const sizeClass = isLarge ? "w-28 h-28" : "w-20 h-20";
+      switch (item.artwork_type) {
+        case "sandworm":
+          return `
+            <svg class="${sizeClass} text-amber-300/80 drop-shadow" viewBox="0 0 120 120" fill="none">
+              <circle cx="84" cy="34" r="18" fill="currentColor" fill-opacity="0.18" />
+              <path d="M18 96 C26 52, 54 24, 78 36 C96 45, 92 78, 72 96" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+              <path d="M28 96 C34 62, 55 38, 72 47 C84 54, 81 78, 65 96" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 4"/>
+              <path d="M8 98 Q60 84 112 98" stroke="currentColor" stroke-width="2" stroke-opacity="0.6"/>
+            </svg>`;
+        case "storm":
+          return `
+            <svg class="${sizeClass} text-orange-300/80" viewBox="0 0 120 120" fill="none">
+              <path d="M14 42 Q48 26 86 40 T110 38" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <path d="M10 60 Q54 44 92 58 T114 56" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-opacity="0.8"/>
+              <path d="M18 78 Q58 66 96 80" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4"/>
+              <circle cx="90" cy="28" r="10" fill="currentColor" fill-opacity="0.25"/>
+            </svg>`;
+        case "wireframe":
+          return `
+            <svg class="${sizeClass} text-cyan-300/85" viewBox="0 0 120 120" fill="none">
+              <ellipse cx="60" cy="60" rx="42" ry="18" transform="rotate(-25 60 60)" stroke="currentColor" stroke-width="1.8"/>
+              <ellipse cx="60" cy="60" rx="42" ry="18" transform="rotate(25 60 60)" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="60" cy="60" r="30" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3"/>
+              <circle cx="38" cy="48" r="3" fill="currentColor"/>
+              <circle cx="60" cy="60" r="3.5" fill="currentColor"/>
+              <circle cx="82" cy="72" r="3" fill="currentColor"/>
+            </svg>`;
+        case "shader":
+          return `
+            <svg class="${sizeClass} text-amber-200/85" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="36" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="2"/>
+              <ellipse cx="48" cy="46" rx="10" ry="6" transform="rotate(-30 48 46)" fill="currentColor" fill-opacity="0.65"/>
+              <path d="M26 68 Q60 88 94 68" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
+            </svg>`;
+        case "shockwave":
+          return `
+            <svg class="${sizeClass} text-amber-300/80" viewBox="0 0 120 120" fill="none">
+              <line x1="60" y1="18" x2="60" y2="74" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <ellipse cx="60" cy="78" rx="22" ry="7" stroke="currentColor" stroke-width="2"/>
+              <ellipse cx="60" cy="78" rx="42" ry="13" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/>
+            </svg>`;
+        default:
+          return `
+            <svg class="${sizeClass} text-zinc-300/80" viewBox="0 0 120 120" fill="none">
+              <polygon points="60,22 98,88 22,88" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.1"/>
+              <circle cx="60" cy="36" r="6" fill="currentColor"/>
+            </svg>`;
+      }
+    }
+
+    // =========================================================================
+    // 4. TOAST HELPER
+    // =========================================================================
+    function showToast(title, subtitle = "") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "pointer-events-auto flex items-start gap-2.5 bg-zinc-900 border border-zinc-700 text-zinc-100 px-3.5 py-2.5 rounded-xl shadow-2xl max-w-sm transition-all duration-200";
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0"></span>
+        <div class="text-xs">
+          <div class="font-semibold text-white">${title}</div>
+          ${subtitle ? `<div class="text-[11px] font-mono text-zinc-400 mt-0.5 break-all">${subtitle}</div>` : ""}
+        </div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-1");
+        setTimeout(() => toast.remove(), 220);
+      }, 2800);
+    }
+
+    // =========================================================================
+    // 5. FILTERING & HYBRID RANKING SIMULATION
+    // =========================================================================
+    function getFilteredEntities() {
+      const q = state.searchQuery.trim().toLowerCase();
+
+      return STUDIO_ENTITIES
+        .filter((item) => {
+          if (item.project_id !== state.project) return false;
+          if (state.entityType !== "all" && item.entity_type !== state.entityType) return false;
+          if (state.department !== "all" && item.department !== state.department) return false;
+          if (state.status !== "all" && item.status !== state.status) return false;
+          if (state.colorSpace !== "all" && item.media.color_space !== state.colorSpace) return false;
+
+          if (!q) return true;
+
+          const lexicalFields = [
+            item.code,
+            item.context.artist,
+            item.context.notes,
+            item.department,
+            item.media.color_space,
+            ...(item.lineage.usd_dependency_codes || [])
+          ].join(" ").toLowerCase();
+
+          const frameReasons = item.keyframes.map((k) => k.reason.toLowerCase()).join(" ");
+          const promptText = item.context.generative_metadata?.prompt?.toLowerCase() || "";
+
+          if (state.searchMode === "lexical") {
+            return lexicalFields.includes(q);
+          }
+          if (state.searchMode === "vector") {
+            return (frameReasons + " " + promptText + " " + item.context.notes.toLowerCase()).includes(q);
+          }
+          // Hybrid ($rankFusion) checks both semantic frame descriptions and lexical metadata
+          return (lexicalFields + " " + frameReasons + " " + promptText).includes(q);
+        })
+        .map((item) => {
+          // Pick the best matching keyframe based on query
+          let bestIdx = 0;
+          if (q) {
+            const foundIdx = item.keyframes.findIndex((kf) => kf.reason.toLowerCase().includes(q));
+            if (foundIdx !== -1) bestIdx = foundIdx;
+          } else {
+            // Default to highest scoring frame
+            let maxScore = -1;
+            item.keyframes.forEach((kf, idx) => {
+              if (kf.score > maxScore) {
+                maxScore = kf.score;
+                bestIdx = idx;
+              }
+            });
+          }
+          return { ...item, matchedFrameIndex: bestIdx };
+        });
+    }
+
+    // =========================================================================
+    // 6. BADGE STYLING HELPERS
+    // =========================================================================
+    function getStatusBadge(status) {
+      const map = {
+        approved: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+        review: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+        wip: "bg-sky-500/15 text-sky-300 border-sky-500/30"
+      };
+      return map[status] || "bg-zinc-800 text-zinc-300 border-zinc-700";
+    }
+
+    function getColorSpaceBadge(cs) {
+      if (cs === "ACEScg") {
+        return "bg-amber-500/10 text-amber-300 border-amber-500/30";
+      }
+      return "bg-zinc-800/90 text-zinc-300 border-zinc-700";
+    }
+
+    // =========================================================================
+    // 7. RENDER SIDEBAR FILTERS & PRESET CHIPS
+    // =========================================================================
+    function renderControls() {
+      // Preset Chips
+      const chipsEl = document.getElementById("preset-chips");
+      chipsEl.innerHTML = PRESET_QUERIES.map((p) => `
+        <button
+          type="button"
+          data-preset-query="${p.query}"
+          data-preset-project="${p.project}"
+          class="preset-chip shrink-0 px-2.5 py-1 rounded-full text-[11px] font-mono bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-amber-300 border border-zinc-800 hover:border-amber-500/40 transition"
+        >
+          "${p.label}"
+        </button>
+      `).join("");
+
+      // Entity Types
+      const entityTypes = [
+        { id: "all", label: "All Entities" },
+        { id: "version", label: "Versions (.mov/.exr)" },
+        { id: "asset", label: "Assets & Rigs" },
+        { id: "shot", label: "Shots" },
+        { id: "usd_layer", label: "USD / MaterialX Layers" }
+      ];
+      document.getElementById("filter-entity-type").innerHTML = entityTypes.map((t) => {
+        const active = state.entityType === t.id;
+        return `
+          <button data-filter-group="entityType" data-filter-val="${t.id}" class="filter-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition ${active ? "bg-zinc-800/90 text-white font-medium border border-zinc-700" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"}">
+            <span>${t.label}</span>
+            ${active ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>' : ""}
+          </button>`;
+      }).join("");
+
+      // Departments
+      const depts = [
+        { id: "all", label: "All Departments" },
+        { id: "fx", label: "FX Simulation" },
+        { id: "lighting", label: "Lighting / Solaris" },
+        { id: "lookdev", label: "Lookdev / Shaders" },
+        { id: "rig", label: "Rigging / USD Skel" }
+      ];
+      document.getElementById("filter-department").innerHTML = depts.map((d) => {
+        const active = state.department === d.id;
+        return `
+          <button data-filter-group="department" data-filter-val="${d.id}" class="filter-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition ${active ? "bg-zinc-800/90 text-white font-medium border border-zinc-700" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"}">
+            <span>${d.label}</span>
+            ${active ? '<span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>' : ""}
+          </button>`;
+      }).join("");
+
+      // Status
+      const statuses = [
+        { id: "all", label: "Any Status" },
+        { id: "approved", label: "Approved" },
+        { id: "review", label: "Pending Review" },
+        { id: "wip", label: "WIP" }
+      ];
+      document.getElementById("filter-status").innerHTML = statuses.map((s) => {
+        const active = state.status === s.id;
+        return `
+          <button data-filter-group="status" data-filter-val="${s.id}" class="filter-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition ${active ? "bg-zinc-800/90 text-white font-medium border border-zinc-700" : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900"}">
+            <span>${s.label}</span>
+            ${active ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>' : ""}
+          </button>`;
+      }).join("");
+
+      // Color Spaces
+      const colorSpaces = ["all", "ACEScg", "Rec.709", "sRGB"];
+      document.getElementById("filter-colorspace").innerHTML = colorSpaces.map((cs) => {
+        const active = state.colorSpace === cs;
+        return `
+          <button data-filter-group="colorSpace" data-filter-val="${cs}" class="filter-btn px-2.5 py-1 rounded-md text-[11px] font-mono border transition ${active ? "bg-amber-500/15 text-amber-300 border-amber-500/40" : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-zinc-200"}">
+            ${cs === "all" ? "All" : cs}
+          </button>`;
+      }).join("");
+    }
+
+    // =========================================================================
+    // 8. RENDER MAIN ASSET GRID
+    // =========================================================================
+    function renderGrid() {
+      const items = getFilteredEntities();
+      const gridEl = document.getElementById("asset-grid");
+      const emptyEl = document.getElementById("empty-state");
+      const countBadge = document.getElementById("result-count-badge");
+      const resetBtn = document.getElementById("reset-filters-btn");
+
+      countBadge.textContent = `${items.length} deduplicated ${items.length === 1 ? "entity" : "entities"}`;
+
+      const hasActiveFilters =
+        state.searchQuery ||
+        state.entityType !== "all" ||
+        state.department !== "all" ||
+        state.status !== "all" ||
+        state.colorSpace !== "all";
+      resetBtn.classList.toggle("hidden", !hasActiveFilters);
+
+      // Ensure selectedId stays valid if project changed
+      if (items.length > 0 && !items.some((i) => i._id === state.selectedId)) {
+        state.selectedId = items[0]._id;
+        state.selectedFrameIndex = items[0].matchedFrameIndex;
+      }
+
+      if (items.length === 0) {
+        gridEl.innerHTML = "";
+        emptyEl.classList.remove("hidden");
+        return;
+      }
+      emptyEl.classList.add("hidden");
+
+      gridEl.innerHTML = items.map((item) => {
+        const isSelected = item._id === state.selectedId;
+        const bestKf = item.keyframes[item.matchedFrameIndex] || item.keyframes[0];
+        const matchPct = Math.round(bestKf.score * 1000) / 10;
+
+        // Calculate timeline marker positions
+        const markerDots = item.keyframes.map((kf, idx) => {
+          const pct = Math.min(94, Math.max(6, Math.round((kf.timestamp_sec / Math.max(1, item.media.duration_sec)) * 100)));
+          const isBest = idx === item.matchedFrameIndex;
+          return `
+            <span
+              title="f${String(kf.frame_num).padStart(3, "0")} (${kf.timestamp_sec}s) — ${kf.reason}"
+              style="left: ${pct}%"
+              class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full transition ${isBest ? "w-2.5 h-2.5 bg-amber-400 ring-2 ring-amber-400/40" : "w-1.5 h-1.5 bg-zinc-400/80"}"
+            ></span>`;
+        }).join("");
+
+        return `
+          <article
+            data-entity-id="${item._id}"
+            data-best-frame="${item.matchedFrameIndex}"
+            class="asset-card group cursor-pointer rounded-2xl bg-zinc-900/75 hover:bg-zinc-900 border transition-all duration-150 overflow-hidden flex flex-col ${isSelected ? "border-amber-500/80 ring-2 ring-amber-500/20" : "border-zinc-800/90 hover:border-zinc-700"}"
+          >
+            <!-- Visual Preview Thumbnail Area -->
+            <div class="relative h-40 bg-gradient-to-br ${item.visual_theme} flex items-center justify-center overflow-hidden border-b border-zinc-800/80">
+              ${renderSimulatedViewportSVG(item, false)}
+
+              <!-- Top-Left Badges -->
+              <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold uppercase border ${getStatusBadge(item.status)}">
+                  ${item.status}
+                </span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-zinc-950/80 text-zinc-300 border border-zinc-800">
+                  ${item.department}
+                </span>
+              </div>
+
+              <!-- Top-Right Color Space & Match Score -->
+              <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono border ${getColorSpaceBadge(item.media.color_space)}">
+                  ${item.media.color_space}
+                </span>
+              </div>
+
+              <!-- Bottom Frame Match Overlay Bar -->
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent px-3 pt-5 pb-2">
+                <div class="flex items-center justify-between text-[11px] font-mono mb-1.5">
+                  <span class="text-amber-300 font-semibold flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    ${matchPct}% match
+                  </span>
+                  <span class="text-zinc-300">
+                    00:${bestKf.timestamp_sec.toFixed(1).padStart(4, "0")} <span class="text-zinc-500">(f${String(bestKf.frame_num).padStart(3, "0")})</span>
+                  </span>
+                </div>
+
+                <!-- Mini Keyframe Scrubber Track -->
+                <div class="relative h-1.5 w-full rounded-full bg-zinc-800/90">
+                  <div class="h-full rounded-full bg-amber-500/40" style="width: ${Math.min(100, Math.round((bestKf.timestamp_sec / Math.max(1, item.media.duration_sec)) * 100))}%"></div>
+                  ${markerDots}
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Metadata Body -->
+            <div class="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
+              <div>
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="font-mono text-xs sm:text-sm font-semibold text-white group-hover:text-amber-300 transition truncate">
+                    ${item.code}
+                  </h2>
+                  <span class="text-[10px] font-mono text-zinc-500 shrink-0">${item.entity_type}</span>
+                </div>
+                <p class="text-xs text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                  ${item.context.notes}
+                </p>
+              </div>
+
+              <!-- Footer: Artist + USD Dependencies Count -->
+              <div class="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-500">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[9px] font-mono text-zinc-300">
+                    ${item.context.artist.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span class="font-mono text-zinc-300">${item.context.artist}</span>
+                </div>
+
+                <div class="flex items-center gap-2 font-mono">
+                  ${item.lineage.usd_dependency_codes.length > 0
+                    ? `<span class="text-cyan-400/90">${item.lineage.usd_dependency_codes.length} USD deps</span>`
+                    : `<span class="text-zinc-600">Leaf USD</span>`
+                  }
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // 9. RENDER RIGHT INSPECTOR DRAWER
+    // =========================================================================
+    function renderInspector() {
+      const container = document.getElementById("inspector-content");
+      const item = STUDIO_ENTITIES.find((e) => e._id === state.selectedId) || STUDIO_ENTITIES[0];
+      if (!item) return;
+
+      const activeKf = item.keyframes[state.selectedFrameIndex] || item.keyframes[0];
+
+      // Keyframe Thumbnail Selector Strip
+      const keyframeButtons = item.keyframes.map((kf, idx) => {
+        const active = idx === state.selectedFrameIndex;
+        return `
+          <button
+            type="button"
+            data-kf-index="${idx}"
+            class="kf-select-btn flex-1 text-left p-2 rounded-xl border transition ${active ? "bg-amber-500/10 border-amber-500/60 text-white" : "bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"}"
+          >
+            <div class="flex items-center justify-between font-mono text-[10px]">
+              <span class="${active ? "text-amber-300 font-semibold" : "text-zinc-300"}">f${String(kf.frame_num).padStart(3, "0")}</span>
+              <span>${kf.timestamp_sec.toFixed(1)}s</span>
+            </div>
+            <div class="text-[10px] font-mono text-emerald-400 mt-0.5">${(kf.score * 100).toFixed(1)}% RRF</div>
+          </button>
+        `;
+      }).join("");
+
+      // Tab Content Builder
+      let tabHtml = "";
+
+      if (state.activeTab === "metadata") {
+        const genMeta = item.context.generative_metadata;
+        tabHtml = `
+          <div class="space-y-3.5">
+            <!-- Sup / Artist Notes -->
+            <div class="rounded-xl bg-zinc-900/80 border border-zinc-800 p-3">
+              <div class="flex items-center justify-between text-[11px] text-zinc-400 mb-1">
+                <span class="font-semibold text-zinc-200">Dailies & Production Notes</span>
+                <span class="font-mono">@${item.context.artist}</span>
+              </div>
+              <p class="text-xs text-zinc-300 leading-relaxed">${item.context.notes}</p>
+            </div>
+
+            <!-- Generative Provenance (if present) -->
+            ${genMeta ? `
+              <div class="rounded-xl bg-zinc-900/80 border border-zinc-800 p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-semibold text-purple-300">Generative AI Provenance</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">${genMeta.model}</span>
+                </div>
+                <div class="text-[11px] font-mono text-zinc-400">Seed: <span class="text-zinc-200">${genMeta.seed}</span></div>
+                <div class="text-xs text-zinc-300 bg-zinc-950 rounded-lg p-2 border border-zinc-800/80 italic">"${genMeta.prompt}"</div>
+              </div>
+            ` : ""}
+
+            <!-- ShotGrid Bidirectional Loop-Safe Sync -->
+            <div class="rounded-xl bg-zinc-900/80 border border-zinc-800 p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-zinc-200">Legacy Tracker Bridge (ShotGrid)</span>
+                <span class="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Echo-Safe
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800/80">
+                  <div class="text-[10px] text-zinc-500">External ID</div>
+                  <div class="text-zinc-200">${item.external_sync.external_id}</div>
+                </div>
+                <div class="bg-zinc-950 p-2 rounded-lg border border-zinc-800/80">
+                  <div class="text-[10px] text-zinc-500">X-Gridlock-Sync-Id</div>
+                  <div class="text-amber-300">${item.external_sync.last_sync_id}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Private S3 / R2 Presigned URL Generator -->
+            <div class="rounded-xl bg-zinc-900/80 border border-zinc-800 p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-zinc-200">Private R2 / S3 Object Keys</span>
+                <span class="text-[10px] font-mono text-zinc-500">Zero Public URLs</span>
+              </div>
+              <div class="text-[11px] font-mono text-zinc-400 bg-zinc-950 px-2.5 py-1.5 rounded-lg border border-zinc-800 truncate">
+                ${item.media.source_key}
+              </div>
+              <button
+                type="button"
+                id="copy-presigned-btn"
+                data-key="${item.media.proxy_stream_key}"
+                class="w-full py-2 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-white flex items-center justify-center gap-2 transition"
+              >
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Mint & Copy 15m Presigned Proxy URL</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (state.activeTab === "lineage") {
+        const deps = item.lineage.usd_dependency_codes;
+        tabHtml = `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-zinc-400">Resolved via <span class="font-mono text-cyan-400">$graphLookup</span> (maxDepth: 10)</span>
+              <span class="font-mono text-zinc-500">OpenUSD pxr</span>
+            </div>
+
+            <!-- Upstream Parent -->
+            <div class="rounded-xl bg-zinc-900/60 border border-zinc-800 p-3">
+              <div class="text-[10px] font-mono uppercase text-zinc-500 mb-1">Upstream Parent Assembly</div>
+              <div class="font-mono text-xs text-zinc-200 flex items-center gap-2">
+                <span class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px]">PARENT</span>
+                <span>${item.lineage.parent_code}</span>
+              </div>
+            </div>
+
+            <!-- Current Active Node -->
+            <div class="rounded-xl bg-amber-500/10 border border-amber-500/40 p-3">
+              <div class="text-[10px] font-mono uppercase text-amber-400 mb-1">Active Root Layer</div>
+              <div class="font-mono text-xs font-semibold text-white">${item.code}</div>
+            </div>
+
+            <!-- Downstream USD Dependencies -->
+            <div class="space-y-2">
+              <div class="text-[10px] font-mono uppercase text-zinc-500">Sublayer Dependencies (${deps.length})</div>
+              ${deps.length === 0
+                ? `<div class="rounded-xl bg-zinc-900/40 border border-zinc-800/80 p-3 text-xs text-zinc-500 font-mono">No downstream USD sublayers referenced.</div>`
+                : deps.map((depCode) => {
+                    const linkedEntity = STUDIO_ENTITIES.find((e) => e.code === depCode);
+                    return `
+                      <button
+                        type="button"
+                        data-jump-code="${depCode}"
+                        class="usd-node-btn w-full text-left rounded-xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800 hover:border-cyan-500/50 p-3 flex items-center justify-between transition"
+                      >
+                        <div>
+                          <div class="font-mono text-xs text-cyan-300 font-medium">${depCode}</div>
+                          <div class="text-[11px] text-zinc-400 mt-0.5">
+                            ${linkedEntity ? `${linkedEntity.department.toUpperCase()} • ${linkedEntity.status}` : "External USD Reference"}
+                          </div>
+                        </div>
+                        <span class="text-[11px] font-mono text-zinc-400">Inspect →</span>
+                      </button>
+                    `;
+                  }).join("")
+              }
+            </div>
+          </div>
+        `;
+      } else {
+        // Raw Atlas Document + $rankFusion Breakdown
+        const rawDoc = {
+          _id: { $oid: item._id },
+          org_id: item.org_id,
+          project_id: item.project_id,
+          entity_type: item.entity_type,
+          code: item.code,
+          status: item.status,
+          department: item.department,
+          matched_keyframe: {
+            frame_num: activeKf.frame_num,
+            timestamp_sec: activeKf.timestamp_sec,
+            voyage_model: "voyage-multimodal-3 (1024d)",
+            rank_fusion_score: activeKf.score
+          },
+          lineage: item.lineage
+        };
+
+        tabHtml = `
+          <div class="space-y-3">
+            <!-- Score Breakdown -->
+            <div class="grid grid-cols-3 gap-2 text-center font-mono">
+              <div class="rounded-xl bg-zinc-900 border border-zinc-800 p-2">
+                <div class="text-[10px] text-zinc-500">$rankFusion</div>
+                <div class="text-xs font-semibold text-amber-400">${activeKf.score.toFixed(3)}</div>
+              </div>
+              <div class="rounded-xl bg-zinc-900 border border-zinc-800 p-2">
+                <div class="text-[10px] text-zinc-500">Vector Cosine</div>
+                <div class="text-xs font-semibold text-cyan-300">${item.scores.vector.toFixed(3)}</div>
+              </div>
+              <div class="rounded-xl bg-zinc-900 border border-zinc-800 p-2">
+                <div class="text-[10px] text-zinc-500">BM25 Lexical</div>
+                <div class="text-xs font-semibold text-emerald-300">${item.scores.lexical.toFixed(1)}</div>
+              </div>
+            </div>
+
+            <pre class="rounded-xl bg-zinc-950 border border-zinc-800 p-3 text-[11px] font-mono text-zinc-300 overflow-x-auto leading-relaxed">${JSON.stringify(rawDoc, null, 2)}</pre>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <!-- Inspector Header -->
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase border ${getStatusBadge(item.status)}">${item.status}</span>
+              <span class="text-xs font-mono text-zinc-500">${item.media.resolution} • ${item.media.fps}fps</span>
+            </div>
+            <h2 class="font-mono text-base font-bold text-white mt-1">${item.code}</h2>
+          </div>
+
+          <!-- OCIO LUT Preview Toggle -->
+          <button
+            type="button"
+            id="toggle-lut-btn"
+            class="px-2.5 py-1.5 rounded-lg text-[11px] font-mono border transition ${state.ocioLutEnabled ? "bg-amber-500/15 text-amber-300 border-amber-500/40" : "bg-zinc-900 text-zinc-400 border-zinc-800"}"
+            title="Toggle OpenColorIO ACEScg to Output - sRGB tone-mapping"
+          >
+            OCIO: ${state.ocioLutEnabled ? "sRGB LUT ON" : "RAW LINEAR"}
+          </button>
+        </div>
+
+        <!-- Simulated Dailies Viewport -->
+        <div class="relative h-52 rounded-2xl border border-zinc-800 overflow-hidden bg-gradient-to-br ${state.ocioLutEnabled ? item.visual_theme : "from-zinc-900 via-zinc-800 to-zinc-950"} flex items-center justify-center">
+          ${renderSimulatedViewportSVG(item, true)}
+
+          <!-- Top HUD -->
+          <div class="absolute top-3 inset-x-3 flex items-center justify-between text-[10px] font-mono">
+            <span class="px-2 py-0.5 rounded bg-zinc-950/80 text-zinc-300 border border-zinc-800">
+              TC 00:00:${String(Math.floor(activeKf.timestamp_sec)).padStart(2, "0")}:${String(activeKf.frame_num % 24).padStart(2, "0")}
+            </span>
+            <span class="px-2 py-0.5 rounded bg-zinc-950/80 text-amber-300 border border-zinc-800">
+              FRAME ${String(activeKf.frame_num).padStart(4, "0")} / ${Math.round(item.media.duration_sec * item.media.fps)}
+            </span>
+          </div>
+
+          <!-- Bottom Semantic Match Explanation Banner -->
+          <div class="absolute bottom-3 inset-x-3 rounded-xl bg-zinc-950/90 backdrop-blur border border-zinc-800/90 px-3 py-2">
+            <div class="text-[10px] font-mono text-amber-400 uppercase">Voyage Multimodal-3 Frame Match</div>
+            <div class="text-xs text-zinc-200 mt-0.5">${activeKf.reason}</div>
+          </div>
+        </div>
+
+        <!-- Timestamp-Accurate Keyframe Strip -->
+        <div>
+          <div class="flex items-center justify-between text-[11px] text-zinc-400 mb-1.5">
+            <span class="font-medium">Indexed Keyframes (Click to scrub)</span>
+            <span class="font-mono text-zinc-500">${item.keyframes.length} hits</span>
+          </div>
+          <div class="flex items-stretch gap-2">
+            ${keyframeButtons}
+          </div>
+        </div>
+
+        <!-- Inspector Tabs -->
+        <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-medium">
+          <button data-tab="metadata" class="inspector-tab-btn py-1.5 rounded-lg transition ${state.activeTab === "metadata" ? "bg-zinc-800 text-white shadow" : "text-zinc-400 hover:text-zinc-200"}">
+            Metadata & Sync
+          </button>
+          <button data-tab="lineage" class="inspector-tab-btn py-1.5 rounded-lg transition ${state.activeTab === "lineage" ? "bg-zinc-800 text-white shadow" : "text-zinc-400 hover:text-zinc-200"}">
+            USD Lineage
+          </button>
+          <button data-tab="payload" class="inspector-tab-btn py-1.5 rounded-lg transition ${state.activeTab === "payload" ? "bg-zinc-800 text-white shadow" : "text-zinc-400 hover:text-zinc-200"}">
+            Atlas JSON
+          </button>
+        </div>
+
+        <!-- Active Tab Body -->
+        <div>${tabHtml}</div>
+      `;
+    }
+
+    // =========================================================================
+    // 10. FULL RENDER ORCHESTRATOR & EVENT LISTENERS
+    // =========================================================================
+    function renderAll() {
+      renderControls();
+      renderGrid();
+      renderInspector();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderAll();
+
+      // Search Input
+      const searchInput = document.getElementById("search-input");
+      const clearBtn = document.getElementById("clear-search-btn");
+      searchInput.addEventListener("input", (e) => {
+        state.searchQuery = e.target.value;
+        clearBtn.classList.toggle("hidden", !state.searchQuery);
+        document.getElementById("stat-latency").textContent = `${Math.floor(14 + Math.random() * 9)} ms`;
+        renderGrid();
+        renderInspector();
+      });
+
+      clearBtn.addEventListener("click", () => {
+        state.searchQuery = "";
+        searchInput.value = "";
+        clearBtn.classList.add("hidden");
+        renderAll();
+      });
+
+      // Project Switcher
+      document.getElementById("project-switcher").addEventListener("change", (e) => {
+        state.project = e.target.value;
+        showToast("Switched Studio Project", `Tenant isolated: studio_apex / ${state.project}`);
+        renderAll();
+      });
+
+      // Search Mode Toggles ($rankFusion / Visual / Lexical)
+      document.querySelectorAll(".search-mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.searchMode = btn.dataset.mode;
+          document.querySelectorAll(".search-mode-btn").forEach((b) => {
+            const active = b.dataset.mode === state.searchMode;
+            b.className = `search-mode-btn px-2 py-0.5 rounded-md text-[11px] font-medium transition ${
+              active
+                ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                : "text-zinc-400 hover:text-zinc-200 border border-transparent"
+            }`;
+          });
+          const labels = {
+            hybrid: "Atlas $rankFusion (Vector + BM25)",
+            vector: "Voyage Multimodal-3 ($vectorSearch)",
+            lexical: "Atlas Search BM25 (USD / Code)"
+          };
+          document.getElementById("active-rank-label").textContent = labels[state.searchMode];
+          renderGrid();
+        });
+      });
+
+      // Delegated Click Handlers
+      document.body.addEventListener("click", (e) => {
+        // Preset Chips
+        const chip = e.target.closest(".preset-chip");
+        if (chip) {
+          state.project = chip.dataset.presetProject;
+          document.getElementById("project-switcher").value = state.project;
+          state.searchQuery = chip.dataset.presetQuery;
+          searchInput.value = state.searchQuery;
+          clearBtn.classList.remove("hidden");
+          renderAll();
+          return;
+        }
+
+        // Sidebar Filter Buttons
+        const filterBtn = e.target.closest(".filter-btn");
+        if (filterBtn) {
+          const group = filterBtn.dataset.filterGroup;
+          const val = filterBtn.dataset.filterVal;
+          state[group] = val;
+          renderAll();
+          return;
+        }
+
+        // Reset Filters
+        if (e.target.id === "reset-filters-btn" || e.target.id === "empty-reset-btn") {
+          state.searchQuery = "";
+          searchInput.value = "";
+          clearBtn.classList.add("hidden");
+          state.entityType = "all";
+          state.department = "all";
+          state.status = "all";
+          state.colorSpace = "all";
+          renderAll();
+          return;
+        }
+
+        // Asset Card Selection
+        const card = e.target.closest(".asset-card");
+        if (card) {
+          state.selectedId = card.dataset.entityId;
+          state.selectedFrameIndex = Number(card.dataset.bestFrame) || 0;
+          renderGrid();
+          renderInspector();
+          return;
+        }
+
+        // Keyframe Scrubber Selection in Inspector
+        const kfBtn = e.target.closest(".kf-select-btn");
+        if (kfBtn) {
+          state.selectedFrameIndex = Number(kfBtn.dataset.kfIndex);
+          renderInspector();
+          return;
+        }
+
+        // Inspector Tabs
+        const tabBtn = e.target.closest(".inspector-tab-btn");
+        if (tabBtn) {
+          state.activeTab = tabBtn.dataset.tab;
+          renderInspector();
+          return;
+        }
+
+        // Toggle OCIO LUT
+        if (e.target.closest("#toggle-lut-btn")) {
+          state.ocioLutEnabled = !state.ocioLutEnabled;
+          renderInspector();
+          return;
+        }
+
+        // Copy Presigned URL
+        const copyBtn = e.target.closest("#copy-presigned-btn");
+        if (copyBtn) {
+          const fakeSignedUrl = `https://r2-private.studio-apex.internal/${copyBtn.dataset.key}?X-Amz-Expires=900&X-Gridlock-RBAC=verified`;
+          const tempInput = document.createElement("input");
+          tempInput.value = fakeSignedUrl;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand("copy");
+          tempInput.remove();
+          showToast("15-Minute Presigned URL Copied", fakeSignedUrl);
+          return;
+        }
+
+        // Jump to USD Dependency Node in $graphLookup Tree
+        const usdNodeBtn = e.target.closest(".usd-node-btn");
+        if (usdNodeBtn) {
+          const targetCode = usdNodeBtn.dataset.jumpCode;
+          const found = STUDIO_ENTITIES.find((item) => item.code === targetCode);
+          if (found) {
+            state.selectedId = found._id;
+            state.selectedFrameIndex = 0;
+            renderGrid();
+            renderInspector();
+            showToast("Traversed USD Dependency", `Loaded ${targetCode} via $graphLookup`);
+          } else {
+            showToast("External USD Layer", `${targetCode} is an external sublayer reference`);
+          }
+        }
+      });
+
+      // Mobile Filter Sidebar Drawer
+      const sidebar = document.getElementById("filter-sidebar");
+      document.getElementById("mobile-filter-btn").addEventListener("click", () => {
+        sidebar.classList.remove("-translate-x-full");
+      });
+      document.getElementById("close-filter-btn").addEventListener("click", () => {
+        sidebar.classList.add("-translate-x-full");
+      });
+
+      // Async Ingest Modal Logic
+      const ingestModal = document.getElementById("ingest-modal");
+      const pipelineBox = document.getElementById("ingest-pipeline-box");
+      document.getElementById("open-ingest-btn").addEventListener("click", () => {
+        pipelineBox.classList.add("hidden");
+        ingestModal.classList.remove("hidden");
+      });
+      document.getElementById("close-ingest-btn").addEventListener("click", () => ingestModal.classList.add("hidden"));
+      document.getElementById("cancel-ingest-btn").addEventListener("click", () => ingestModal.classList.add("hidden"));
+
+      document.getElementById("ingest-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const code = document.getElementById("ingest-code").value.trim();
+        const dept = document.getElementById("ingest-dept").value;
+        const file = document.getElementById("ingest-file").value.trim();
+        const cs = document.getElementById("ingest-colorspace").value;
+        const notes = document.getElementById("ingest-notes").value.trim();
+
+        pipelineBox.classList.remove("hidden");
+        const s1 = document.getElementById("step-1");
+        const s2 = document.getElementById("step-2");
+        const s3 = document.getElementById("step-3");
+
+        s1.querySelector(".status-tag").textContent = "Done ✓";
+        s1.querySelector(".status-tag").className = "status-tag text-emerald-400";
+        s2.classList.remove("text-zinc-500");
+        s2.classList.add("text-zinc-200");
+        s2.querySelector(".status-tag").textContent = "Extracting...";
+        s2.querySelector(".status-tag").className = "status-tag text-amber-400";
+
+        setTimeout(() => {
+          s2.querySelector(".status-tag").textContent = "Done ✓";
+          s2.querySelector(".status-tag").className = "status-tag text-emerald-400";
+          s3.classList.remove("text-zinc-500");
+          s3.classList.add("text-zinc-200");
+          s3.querySelector(".status-tag").textContent = "Embedding 1024d...";
+          s3.querySelector(".status-tag").className = "status-tag text-amber-400";
+        }, 550);
+
+        setTimeout(() => {
+          const newId = "6745a1b2c3d4e5f6a7b8" + Math.floor(1000 + Math.random() * 9000);
+          STUDIO_ENTITIES.unshift({
+            _id: newId,
+            org_id: "studio_apex",
+            project_id: state.project,
+            entity_type: "version",
+            code,
+            status: "review",
+            department: dept,
+            visual_theme: "from-amber-900 via-orange-950 to-zinc-950",
+            accent_hex: "amber",
+            artwork_type: "storm",
+            media: {
+              source_key: file,
+              proxy_stream_key: `proxies/${state.project}/${code}.mp4`,
+              duration_sec: 7.5,
+              fps: 24,
+              resolution: "4096x2160",
+              color_space: cs
+            },
+            lineage: {
+              parent_code: "seq_099_live_ingest",
+              usd_dependency_codes: ["shd_spice_sand_v04"]
+            },
+            context: {
+              artist: "a.chen",
+              notes,
+              generative_metadata: null
+            },
+            external_sync: {
+              tracker: "shotgrid",
+              external_id: "Version_" + Math.floor(99600 + Math.random() * 300),
+              last_sync_id: "evt_sg_" + Math.floor(10000 + Math.random() * 89999),
+              last_synced_at: new Date().toISOString()
+            },
+            scores: { rrf: 0.975, vector: 0.961, lexical: 15.4 },
+            keyframes: [
+              { frame_num: 36, timestamp_sec: 1.5, score: 0.975, reason: "Newly ingested OCIO tone-mapped keyframe + Voyage 1024d vector" },
+              { frame_num: 120, timestamp_sec: 5.0, score: 0.91, reason: "Secondary motion peak" }
+            ]
+          });
+
+          state.selectedId = newId;
+          state.selectedFrameIndex = 0;
+          ingestModal.classList.add("hidden");
+          renderAll();
+          showToast("Change Stream Event Received", `Indexed ${code} (${cs} → sRGB) into Atlas`);
+        }, 1150);
+      });
+    });
+  </script>
+</body>
+</html>
